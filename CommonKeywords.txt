@@ -1,0 +1,153 @@
+*** Settings ***
+Library           SeleniumLibrary
+Library           ExcelLibrary
+Resource          ExcelDataFetch.txt
+Library           DateTime
+
+*** Variables ***
+${Text1}          ${EMPTY}
+@{CITIES}
+${CITY}           ${EMPTY}
+${Response}       Toronto Chicago New York London
+${Response2}      Paris Tokyo Mumbai Atlanta
+${Response3}      Economy Business First
+${Date1}          20/06/2019
+${Date2}          28/06/2019
+
+*** Keywords ***
+Loginandnavigatetourl
+    Open Browser    https://ngendigital.com/demo-application    chrome
+    Maximize Browser Window
+    Element Text Should Be    xpath://span[contains(text(),'Login to Flight Application')]    Login to Flight Application
+
+Objectsonthewebpage
+    Element Text Should Be    xpath://div[@class='box']/h1    My Account
+    Page Should Contain Element    xpath://input[@type='email']
+    Page Should Contain Element    xpath://input[@type='password']
+    Page Should Contain Element    xpath://div[@name='SignIn']
+    Page Should Contain Element    xpath://div[@id='btn2']
+    Page Should Contain Element    xpath://u[contains(text(),'Click Here!')]
+    Page Should Contain Element    xpath://p[contains(text(),'Forgot your password? ')]
+
+Changetoiframe
+    Select Frame    id:iframe-05
+
+Defaultvalueusernamepassword
+    Element Attribute Value Should Be    xpath://input[@type='email']    value    email
+    Element Attribute Value Should Be    xpath://input[@type='password']    value    password
+
+Emptyusername
+    Wait Until Keyword Succeeds    2    1    Clear Element Text    xpath://input[@type='email']
+    Wait Until Keyword Succeeds    2    1    Input Text    xpath://input[@type='password']    abc123
+    Wait Until Keyword Succeeds    2    1    Click Element    xpath://div[@name='SignIn']
+    ${Text1}    Get Text    xpath://font[@color='red']
+    Run Keyword If    '${Text1}'=='Please enter username'    Log    ${Text1}
+
+Emptypassword
+    Wait Until Keyword Succeeds    2    1    Input Text    xpath://input[@type='email']    support@ngendigital.com
+    Wait Until Keyword Succeeds    2    1    Clear Element Text    xpath://input[@type='password']
+    Wait Until Keyword Succeeds    2    1    Click Element    xpath://div[@name='SignIn']
+    ${Text1}    Get Text    xpath://font[contains(text(),'Please enter password')]
+    Run Keyword If    '${Text1}'=='Please enter password'    Log    ${Text1}
+
+Emptyusernameandpassword
+    Wait Until Keyword Succeeds    2    1    Clear Element Text    xpath://input[@type='email']
+    Wait Until Keyword Succeeds    2    1    Clear Element Text    xpath://input[@type='password']
+    Wait Until Keyword Succeeds    2    1    Click Element    xpath://div[@name='SignIn']
+    ${Text1}    Get Text    xpath://font[contains(text(),'Please enter username and password')]
+    Run Keyword If    '${Text1}'=='Please enter username and password'    Log    ${Text1}
+
+Invalidemailformats
+    Wait Until Keyword Succeeds    2    1    Input Text    xpath://input[@type='email']    support@digital.com
+    Wait Until Keyword Succeeds    2    1    Input Text    xpath://input[@type='password']    abc123
+    Wait Until Keyword Succeeds    2    1    Click Element    xpath://div[@name='SignIn']
+    ${Text1}    Get Text    xpath://font[contains(text(),'Invalid username/password')]
+    Run Keyword If    '${Text1}==''Invalid username/password'    Log    ${Text1}
+
+Login
+    Open Excel    C:/Users/Ramanath Reddy/Desktop/LOGIN.xls
+    ${username}    Read Cell Data By Coordinates    Sheet1    1    1
+    Sleep    4
+    ${password}    Read Cell Data By Coordinates    Sheet1    2    1
+    Input Text    name:email    ${username}
+    Input Text    name:passwd    ${password}
+    Click Element    class:btn
+
+Changetoiframe1
+    Wait Until Keyword Succeeds    2    1    Select Frame    xpath:/html/body/div/div/div/div[3]/div/div/section/div/div/div/div/span/iframe
+
+Objectsontheloginpage
+    Page Should Contain Element    css:body > h2 > font
+    Page Should Contain Element    xpath://button[@id='defaultOpen']
+    Page Should Contain Element    xpath://button[@name='Booking']
+    Page Should Contain Element    xpath://button[contains(text(),'Check in')]
+    Page Should Contain Element    xpath://button[contains(text(),'Log out')]
+    Page Should Contain Element    xpath://font[contains(text(),'Enter Flight Number:')]
+    Page Should Contain Element    xpath://input[@id='FlightNo']
+    Page Should Contain Element    xpath://*[@id="Search"]/p[5]/button
+
+validationonmanagebooking
+    Click Element    xpath://button[@name='Booking']
+    Wait Until Keyword Succeeds    2    1    Page Should Contain List    xpath://select[@id='FromCity']
+    Wait Until Keyword Succeeds    2    1    Page Should Contain List    xpath://select[@id='ToCity']
+    Wait Until Page Contains Element    xpath://input[@id='goDate']    2    page doesnot contain element
+    Wait Until Page Contains Element    xpath://input[@id='returnDate']    2    page doesnot contain element
+    Wait Until Keyword Succeeds    2    1    Page Should Contain List    xpath://select[@id='Class']
+    Wait Until Keyword Succeeds    2    1    Page Should Contain Checkbox    xpath://input[@name='roundtrip']
+    Wait Until Keyword Succeeds    2    1    Page Should Contain Radio Button    xpath://input[@value='flight']
+    Wait Until Keyword Succeeds    2    1    Page Should Contain Radio Button    xpath://input[@id='flighthotel']
+
+Validatefromcity
+    @{CITIES}    Get List Items    xpath://select[@id='FromCity']
+    FOR    ${CITY}    IN    @{CITIES}
+        Should Contain    ${Response}    ${CITY}
+    END
+
+Logout
+    Wait Until Keyword Succeeds    2    1    Click Element    xpath://button[contains(text(),'Log out')]
+    Element Text Should Be    xpath://span[contains(text(),'Login to Flight Application')]    Login to Flight Application
+
+Validatetocity
+    @{CITIES}    Get List Items    xpath://select[@id='ToCity']
+    FOR    ${CITY}    IN    @{CITIES}
+        Should Contain    ${Response2}    ${CITY}
+    END
+
+validateclass
+    @{CITIES}    Get List Items    xpath://select[@id='Class']
+    FOR    ${CITY}    IN    @{CITIES}
+        Should Contain    ${Response3}    ${CITY}
+    END
+
+RadiobuttonValidation
+    Radio Button Should Not Be Selected    flight
+    Select Radio Button    flight    flight
+    Run Keyword And Expect Error    STARTS:Selection of radio button    Radio Button Should Be Set To     flight    flighthotel
+
+BookEconomyFlight
+    List Selection Should Be    xpath://select[@id='FromCity']    Toronto
+    List Selection Should Be    xpath://select[@id='ToCity']    Paris
+    Input Text    xpath://input[@id='goDate']    ${Date1}
+    Input Text    xpath://input[@id='returnDate']    ${Date2}
+    Wait Until Keyword Succeeds    2    1    Select From List By Index    xpath://select[@id='Class']    2
+    Select Radio Button    flight    flight
+    Click Button    xpath://button[contains(text(),'Get Fare')]
+    Click Element    xpath://div[@id='FareFirst']//tbody/tr[5]/td[4]
+    Click Button    xpath://div[@id='FareFirst']/p//button[@id='confirm']
+    Page Should Contain    SUCCESS !! Your flight is booked
+
+changetoframe2
+    Select Frame    xpath:/html/body/div/div/div/div[3]/div/div/section/div/div/div/div/span/iframe
+
+BookEconomy
+    Select From List By Index    xpath://select[@id='FromCity']    1
+    Select From List By Index    xpath://select[@id='ToCity']    2
+    Input Text    xpath://input[@id='goDate']    ${Date1}
+    Input Text    xpath://input[@id='returnDate']    ${Date2}
+    Select From List By Index    xpath://select[@id='Class']    1
+    Select Checkbox    xpath://input[@type='checkbox']
+    Select Radio Button    flight    flighthotel
+    Click Button    xpath://button[contains(text(),'Get Fare')]
+    Click Element    xpath:/html/body/div[6]/p[1]/table/tbody/tr[5]/td[4]
+    Click Button    xpath:/html/body/div[6]/p[3]/button
+    Page Should Contain    SUCCESS !! Your flight is booked

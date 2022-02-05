@@ -1,0 +1,45 @@
+*** Settings ***
+Library           SeleniumLibrary
+Library           ExcelLibrary
+
+*** Variables ***
+${username}       ${EMPTY}
+${password}       ${EMPTY}
+${username1}      ${EMPTY}
+${password1}      ${EMPTY}
+
+*** Keywords ***
+Logintoflightapplication
+    [Arguments]    ${username}    ${password}
+    Input Text    name:email    ${username}
+    Input Password    name:passwd    ${password}
+    Click Element    class:btn
+
+Loginintoflightwithdatadriven
+    Set Global Variable    ${username1}
+    Set Global Variable    ${password1}
+    Open Excel    C:/Robot_projects/FirstRobot/DEMO3.xls
+    ${username1}    Read Cell Data By Coordinates    LOGIN    1    2
+    ${password1}    Read Cell Data By Coordinates    LOGIN    2    2
+    Input Text    xpath://input[@name='email']    ${username1}
+    Input Password    xpath://input[@name='passwd']    ${password1}
+    Click Element    xpath://div[@name='SignIn']
+
+Loginfunctionalitywithdata
+    Set Global Variable    ${username}
+    Set Global Variable    ${password}
+    Open Excel    C:/Users/Ramanath Reddy/Desktop/LOGIN.xls
+    ${username}    Read Cell Data By Coordinates    Sheet1    1    1
+    ${password}    Read Cell Data By Coordinates    Sheet1    2    1
+
+usernamelogin
+    Open Browser    https://ngendigital.com/demo-application    chrome
+    Maximize Browser Window
+    Select Frame    id:iframe-05
+    Open Excel    C:/Users/Ramanath Reddy/Desktop/LOGIN.xls
+    ${username}    Read Cell Data By Coordinates    Sheet1    1    2
+    Sleep    4
+    ${password}    Read Cell Data By Coordinates    Sheet1    2    2
+    Input Text    name:email    ${username}
+    Input Text    name:passwd     ${password}
+    Click Element    class:btn
